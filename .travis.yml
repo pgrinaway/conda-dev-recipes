@@ -1,30 +1,12 @@
-# Use old trusty image since new one breaks our builds
-# See: https://blog.travis-ci.com/2017-12-12-new-trusty-images-q4-launch
 group: deprecated-2017Q4
-
 os:
-  - linux
-  - osx
-
-
-# Supported osx/xcode versions: https://docs.travis-ci.com/user/languages/objective-c/#Supported-Xcode-versions
-# See also: https://blog.travis-ci.com/2016-10-04-osx-73-default-image-live/
+- linux
+- osx
 osx_image: xcode6.4
-
-#cache:
-#  directories:
-#    # Disabled homebrew cache, did not appear to do anything
-#    #- $HOME/Library/Caches/Homebrew
-#    - $HOME/nvidia_cache
-#  # https://docs.travis-ci.com/user/caching/#Setting-the-timeout
-#  timeout: 540  # seconds: 9 min cache upload time (default is 3 min)
-
 language: c
 sudo: required
-
 services:
-  - docker
-
+- docker
 env:
   matrix:
     - CUDA_VERSION="7.5" CUDA_SHORT_VERSION="75"
@@ -33,41 +15,23 @@ env:
     - CUDA_VERSION="9.1" CUDA_SHORT_VERSION="91"
     - CUDA_VERSION="9.2" CUDA_SHORT_VERSION="92"
     - CUDA_VERSION="10.0" CUDA_SHORT_VERSION="100"
-  secure:
-  - "hCc0rSIpg/NAZyub5OLcmFLzJ4qKIFwSyiQ3kExosoKTp6g8lWdXPoqLeDx2YBk0SEdtWEQlTUxcnoFXNT1IHxnS5+2EMHdibvpcF+undOCMPCbo26raZ/3rwSxz8FWEHOVaCKJTaFuDlZAxmpQnUBTqYjEhmKgSjp+F3GMZwAX+M3Ic7UraKAdiKYFQToLjcc9TkyEMcqrle+xIRnpaYorgdmsBCSQ6AX4wu0bRldiUfhCp+9eLL9Ik1xLe/qR8BZSGt99dlz+sihhU//mqQgGB21b1kDQfrwErcfVioIVhBR11a2dUxoWkaWs5yCouzzvA1HyMu1da1jm8K4YdjA3Jqu3pevp+mKJ9TzhEvkzKmCZOonACATLY4dSmcWrMAQEX69yWJyqYxqWW3L5SwXyPySZbqMUJgyoleklRgct1R2yw/wAHrYWNdYuBQf3Go0q6UG/V2/JEkHnwTI54QrYIGT1h6I/44ThVAmtJEsNLALhIuDX18SXcTUoLj/+8KG7OEihMKbhwxrEM4LhkMiTNfk09phhY4MEapDXSVKC2G44CBw07tf6RCPovw+jTxCafFM1iY+Rt3nEm0UZksNo8wxdgu8EkEctMenUpzAwXB3Cc3h65f0n+WR5dIrl2w+/gYrkGgY3KL+b47UxWv5+luytTBiy+jsOGeLT/L88="
-
-
+  secure: cY4VkJZmTzLh/zCvj+jDw132ibKIWfHOoetpNZBqsb6dNAlrznJm3TdYwPLRMlpXWRytXiXXm7kpQIGglPrBzfIaspCUTvQTiX/a3xU3D0f6gT98eVWOm2i6SobOu6SIzHub1gUy3DyV9r9KIgzrULUukt/EOzDJA+97fLBZOoTLpKU6TYllwJ0M0YdxGcDqNXsx+NOdlfmkRJG+FyAuO8u1Y4iDn4QeQX8nwaS0nw1SCECzLSDG4QkKIu2h2E/p0X7k5nYG7kJUBUCfg8qaKSeoSCCvyEQrTb3hEG5lAvG4wrUKmp2+RtaqBctYbjhGfad8A9FJzr15K77IUPLMQkEWl0j7PXoTLOhpTFJvQIYBAhv+SWCo7+MWL504vgllQDu4zGwCyij8wocoqkOn/gRXslNU9rZpbALm0yT6kHLiHy1PnZv4T9xrxolST4XFVTrcgL7OKqBR9eTrk0di3KrkIa8DcdBihKI/tZRaI3132oaAkf50dPsyRZ1SEryQgKdrkH4lt4xDc0rrD0vuOnMJp6+lviz9diL39Pcd5WAse2vTNwgd3xMeprvXjvCfRoqkYCfhCbJaO6W/nuwGU8J2WWna7C7SwQyEQrdLlS15N51LZ/uTHQs7tuSiH01kTyATkcnNLXG2c8cjN5YsQlGuhvaDtLIKQT8JiINaBN8=
 install:
-  - export DOCKER_IMAGE="jchodera/omnia-linux-anvil:texlive18-cuda${CUDA_SHORT_VERSION}"
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      docker pull ${DOCKER_IMAGE};
-    fi
-
+- export DOCKER_IMAGE="jchodera/omnia-linux-anvil:texlive18-cuda${CUDA_SHORT_VERSION}"
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull ${DOCKER_IMAGE}; fi
 script:
-  # Retrieve conda-build-all
-  # DEBUG: Temporarily commented out to test
-  #- wget -O conda-build-all --quiet https://raw.githubusercontent.com/omnia-md/conda-recipes/master/conda-build-all
-  - chmod +x conda-build-all
-  # Select upload destination
-  - export CHECK_AGAINST="--check-against omnia --check-against omnia/label/cuda${CUDA_SHORT_VERSION}"
-  - export CHECK_AGAINST="$CHECK_AGAINST --check-against omnia/label/beta --check-against omnia/label/betacuda${CUDA_SHORT_VERSION}"
-  - export CHECK_AGAISNT="$CHECK_AGAINST --check-against omnia/label/dev --check-against omnia/label/devcuda${CUDA_SHORT_VERSION}"
-  - if [[ "${TRAVIS_PULL_REQUEST}" == "false" && "${TRAVIS_BRANCH}" == "master" ]]; then
-        export UPLOAD="$CHECK_AGAINST --upload omnia";
-    else
-        export UPLOAD="%CHECK_AGAINST";
-    fi
-  - echo $UPLOAD
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-
-        docker run -e UPLOAD -e BINSTAR_TOKEN -e CUDA_VERSION -e CUDA_SHORT_VERSION -e TRAVIS_PULL_REQUEST
-            -t -i --rm -v `pwd`:/io ${DOCKER_IMAGE}
-            bash /io/devtools/docker-build.sh;
-
-    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-
-        echo "Building osx...";
-        export NVIDIA_CACHE=$HOME/nvidia_cache;
-        bash devtools/osx-build.sh;
-
-    fi
+- chmod +x conda-build-all
+- export CHECK_AGAINST="--check-against pgrinaway --check-against pgrinaway/label/cuda${CUDA_SHORT_VERSION}"
+- export CHECK_AGAINST="$CHECK_AGAINST --check-against pgrinaway/label/beta --check-against
+  pgrinaway/label/betacuda${CUDA_SHORT_VERSION}"
+- export CHECK_AGAISNT="$CHECK_AGAINST --check-against pgrinaway/label/dev --check-against
+  pgrinaway/label/devcuda${CUDA_SHORT_VERSION}"
+- if [[ "${TRAVIS_PULL_REQUEST}" == "false" && "${TRAVIS_BRANCH}" == "master" ]];
+  then export UPLOAD="--upload pgrinaway"; else export UPLOAD="%CHECK_AGAINST"; fi
+- echo $UPLOAD
+- |-
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+  docker run -e UPLOAD -e BINSTAR_TOKEN -e CUDA_VERSION -e CUDA_SHORT_VERSION -e TRAVIS_PULL_REQUEST -t -i --rm -v `pwd`:/io ${DOCKER_IMAGE} bash /io/devtools/docker-build.sh;
+  elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+  echo "Building osx..."; export NVIDIA_CACHE=$HOME/nvidia_cache; bash devtools/osx-build.sh;
+  fi

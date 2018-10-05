@@ -4,7 +4,7 @@ package:
 
 source:
   git_url: https://github.com/pandegroup/openmm.git
-  #git_tag : 10aba26
+  git_tag : 10aba26a12f2d1411cd7800978bdc1af7ee60677
   patches:
     - silent-cmake.patch
     - silent-doxygen.patch
